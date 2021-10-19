@@ -202,12 +202,13 @@ FreeRTOS_IRQ_Handler:
 	PUSH	{r0-r4, lr}
 	LDR		r1, vApplicationIRQHandlerConst
 	BLX		r1
-	POP		{r0-r4, lr}
-	ADD		sp, sp, r2
-
+	
 	CPSID	i
 	DSB
 	ISB
+	
+	POP		{r0-r4, lr}
+	ADD		sp, sp, r2
 
 	/* Write the value read from ICCIAR to ICCEOIR. */
 	LDR 	r4, ulICCEOIRConst
@@ -296,6 +297,10 @@ vApplicationIRQHandler:
 
 	LDR		r1, vApplicationFPUSafeIRQHandlerConst
 	BLX		r1
+	
+	CPSID	i
+	DSB
+	ISB
 
 	POP		{R0}
 	VPOP	{D16-D31}
