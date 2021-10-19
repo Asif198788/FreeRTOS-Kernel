@@ -1,5 +1,9 @@
 /*
+<<<<<<< HEAD
  * FreeRTOS Kernel <DEVELOPMENT BRANCH>
+=======
+ * FreeRTOS SMP Kernel V202110.00
+>>>>>>> origin/smp
  * Copyright 2020 Cambridge Consultants Ltd.
  *
  * SPDX-License-Identifier: MIT

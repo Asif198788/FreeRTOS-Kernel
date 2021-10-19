@@ -1,5 +1,9 @@
 /*
+<<<<<<< HEAD
  * FreeRTOS Kernel <DEVELOPMENT BRANCH>
+=======
+ * FreeRTOS SMP Kernel V202110.00
+>>>>>>> origin/smp
  * Copyright (C) 2020 Synopsys, Inc. or its affiliates.  All Rights Reserved.
  *
  * SPDX-License-Identifier: MIT

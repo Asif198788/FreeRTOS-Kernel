@@ -1,5 +1,9 @@
 /*
+<<<<<<< HEAD
  * FreeRTOS Kernel V10.4.3
+=======
+ * FreeRTOS SMP Kernel V202110.00
+>>>>>>> origin/smp
  * Copyright (C) 2020 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
  * Copyright (c) 2021 Raspberry Pi (Trading) Ltd.
  *
