@@ -1,8 +1,13 @@
 /*
+<<<<<<< HEAD
  * FreeRTOS Kernel <DEVELOPMENT BRANCH>
  * Copyright (C) 2021 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
  *
  * SPDX-License-Identifier: MIT
+=======
+ * FreeRTOS SMP Kernel V202110.00
+ * Copyright (C) 2020 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
+>>>>>>> origin/smp
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -1314,11 +1319,29 @@ TickType_t xTimerGetExpiryTime( TimerHandle_t xTimer ) PRIVILEGED_FUNCTION;
  * for use by the kernel only.
  */
 BaseType_t xTimerCreateTimerTask( void ) PRIVILEGED_FUNCTION;
-BaseType_t xTimerGenericCommand( TimerHandle_t xTimer,
-                                 const BaseType_t xCommandID,
-                                 const TickType_t xOptionalValue,
-                                 BaseType_t * const pxHigherPriorityTaskWoken,
-                                 const TickType_t xTicksToWait ) PRIVILEGED_FUNCTION;
+
+/*
+ * Splitting the xTimerGenericCommand into two sub functions and making it a macro
+ * removes a recursion path when called from ISRs. This is primarily for the XCore
+ * XCC port which detects the recursion path and throws an error during compilation
+ * when this is not split.
+ */
+BaseType_t xTimerGenericCommandFromTask( TimerHandle_t xTimer,
+                                         const BaseType_t xCommandID,
+                                         const TickType_t xOptionalValue,
+                                         BaseType_t * const pxHigherPriorityTaskWoken,
+                                         const TickType_t xTicksToWait ) PRIVILEGED_FUNCTION;
+
+BaseType_t xTimerGenericCommandFromISR( TimerHandle_t xTimer,
+                                        const BaseType_t xCommandID,
+                                        const TickType_t xOptionalValue,
+                                        BaseType_t * const pxHigherPriorityTaskWoken,
+                                        const TickType_t xTicksToWait ) PRIVILEGED_FUNCTION;
+
+#define xTimerGenericCommand( xTimer, xCommandID, xOptionalValue, pxHigherPriorityTaskWoken, xTicksToWait )         \
+    ( ( xCommandID ) < tmrFIRST_FROM_ISR_COMMAND ?                                                                  \
+      xTimerGenericCommandFromTask( xTimer, xCommandID, xOptionalValue, pxHigherPriorityTaskWoken, xTicksToWait ) : \
+      xTimerGenericCommandFromISR( xTimer, xCommandID, xOptionalValue, pxHigherPriorityTaskWoken, xTicksToWait ) )
 
 #if ( configUSE_TRACE_FACILITY == 1 )
     void vTimerSetTimerNumber( TimerHandle_t xTimer,

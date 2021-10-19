@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 ;/*
 ; * FreeRTOS Kernel <DEVELOPMENT BRANCH>
 ; * Copyright (C) 2021 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
@@ -25,6 +26,8 @@
 ; * https://github.com/FreeRTOS
 ; *
 ; */
+=======
+>>>>>>> origin/smp
 		RSEG ICODE:CODE
 		CODE32
 
@@ -49,7 +52,11 @@ vPortYieldProcessor:
 	ADD		LR, LR, #4			; Add 4 to the LR to make the LR appear exactly
 								; as if the context was saved during and IRQ
 								; handler.
+<<<<<<< HEAD
 
+=======
+								
+>>>>>>> origin/smp
 	portSAVE_CONTEXT			; Save the context of the current task...
 	LDR R0, =vTaskSwitchContext	; before selecting the next task to execute.
 	mov     lr, pc

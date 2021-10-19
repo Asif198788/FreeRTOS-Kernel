@@ -1,8 +1,13 @@
 /*
+<<<<<<< HEAD
  * FreeRTOS Kernel <DEVELOPMENT BRANCH>
  * Copyright (C) 2021 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
  *
  * SPDX-License-Identifier: MIT
+=======
+ * FreeRTOS SMP Kernel V202110.00
+ * Copyright (C) 2020 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
+>>>>>>> origin/smp
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -161,6 +166,7 @@ typedef struct StreamBufferDef_t                 /*lint !e9058 Style convention 
 static size_t prvBytesInBuffer( const StreamBuffer_t * const pxStreamBuffer ) PRIVILEGED_FUNCTION;
 
 /*
+<<<<<<< HEAD
  * Add xCount bytes from pucData into the pxStreamBuffer's data storage area.
  * This function does not update the buffer's xHead pointer, so multiple writes
  * may be chained together "atomically". This is useful for Message Buffers where
@@ -175,6 +181,16 @@ static size_t prvWriteBytesToBuffer( StreamBuffer_t * const pxStreamBuffer,
                                      const uint8_t * pucData,
                                      size_t xCount,
                                      size_t xHead ) PRIVILEGED_FUNCTION;
+=======
+ * Add xCount bytes from pucData into the pxStreamBuffer message buffer.
+ * Returns the number of bytes written, which will either equal xCount in the
+ * success case, or 0 if there was not enough space in the buffer (in which case
+ * no data is written into the buffer).
+ */
+static size_t prvWriteBytesToBuffer( StreamBuffer_t * const pxStreamBuffer,
+                                     const uint8_t * pucData,
+                                     size_t xCount ) PRIVILEGED_FUNCTION;
+>>>>>>> origin/smp
 
 /*
  * If the stream buffer is being used as a message buffer, then reads an entire
@@ -186,7 +202,12 @@ static size_t prvWriteBytesToBuffer( StreamBuffer_t * const pxStreamBuffer,
 static size_t prvReadMessageFromBuffer( StreamBuffer_t * pxStreamBuffer,
                                         void * pvRxData,
                                         size_t xBufferLengthBytes,
+<<<<<<< HEAD
                                         size_t xBytesAvailable ) PRIVILEGED_FUNCTION;
+=======
+                                        size_t xBytesAvailable,
+                                        size_t xBytesToStoreMessageLength ) PRIVILEGED_FUNCTION;
+>>>>>>> origin/smp
 
 /*
  * If the stream buffer is being used as a message buffer, then writes an entire
@@ -202,6 +223,7 @@ static size_t prvWriteMessageToBuffer( StreamBuffer_t * const pxStreamBuffer,
                                        size_t xRequiredSpace ) PRIVILEGED_FUNCTION;
 
 /*
+<<<<<<< HEAD
  * Copies xCount bytes from the pxStreamBuffer's data storage area to pucData.
  * This function does not update the buffer's xTail pointer, so multiple reads
  * may be chained together "atomically". This is useful for Message Buffers where
@@ -217,6 +239,15 @@ static size_t prvReadBytesFromBuffer( StreamBuffer_t * pxStreamBuffer,
                                       uint8_t * pucData,
                                       size_t xCount,
                                       size_t xTail ) PRIVILEGED_FUNCTION;
+=======
+ * Read xMaxCount bytes from the pxStreamBuffer message buffer and write them
+ * to pucData.
+ */
+static size_t prvReadBytesFromBuffer( StreamBuffer_t * pxStreamBuffer,
+                                      uint8_t * pucData,
+                                      size_t xMaxCount,
+                                      size_t xBytesAvailable ) PRIVILEGED_FUNCTION;
+>>>>>>> origin/smp
 
 /*
  * Called by both pxStreamBufferCreate() and pxStreamBufferCreateStatic() to
@@ -498,6 +529,7 @@ size_t xStreamBufferSpacesAvailable( StreamBufferHandle_t xStreamBuffer )
 {
     const StreamBuffer_t * const pxStreamBuffer = xStreamBuffer;
     size_t xSpace;
+<<<<<<< HEAD
     size_t xOriginalTail;
 
     configASSERT( pxStreamBuffer );
@@ -512,6 +544,13 @@ size_t xStreamBufferSpacesAvailable( StreamBufferHandle_t xStreamBuffer )
         xSpace -= pxStreamBuffer->xHead;
     } while( xOriginalTail != pxStreamBuffer->xTail );
 
+=======
+
+    configASSERT( pxStreamBuffer );
+
+    xSpace = pxStreamBuffer->xLength + pxStreamBuffer->xTail;
+    xSpace -= pxStreamBuffer->xHead;
+>>>>>>> origin/smp
     xSpace -= ( size_t ) 1;
 
     if( xSpace >= pxStreamBuffer->xLength )
@@ -727,6 +766,7 @@ static size_t prvWriteMessageToBuffer( StreamBuffer_t * const pxStreamBuffer,
                                        size_t xSpace,
                                        size_t xRequiredSpace )
 {
+<<<<<<< HEAD
     size_t xNextHead = pxStreamBuffer->xHead;
 
     if( ( pxStreamBuffer->ucFlags & sbFLAGS_IS_MESSAGE_BUFFER ) != ( uint8_t ) 0 )
@@ -761,6 +801,51 @@ static size_t prvWriteMessageToBuffer( StreamBuffer_t * const pxStreamBuffer,
     }
 
     return xDataLengthBytes;
+=======
+    BaseType_t xShouldWrite;
+    size_t xReturn;
+
+    if( xSpace == ( size_t ) 0 )
+    {
+        /* Doesn't matter if this is a stream buffer or a message buffer, there
+         * is no space to write. */
+        xShouldWrite = pdFALSE;
+    }
+    else if( ( pxStreamBuffer->ucFlags & sbFLAGS_IS_MESSAGE_BUFFER ) == ( uint8_t ) 0 )
+    {
+        /* This is a stream buffer, as opposed to a message buffer, so writing a
+         * stream of bytes rather than discrete messages.  Write as many bytes as
+         * possible. */
+        xShouldWrite = pdTRUE;
+        xDataLengthBytes = configMIN( xDataLengthBytes, xSpace );
+    }
+    else if( xSpace >= xRequiredSpace )
+    {
+        /* This is a message buffer, as opposed to a stream buffer, and there
+         * is enough space to write both the message length and the message itself
+         * into the buffer.  Start by writing the length of the data, the data
+         * itself will be written later in this function. */
+        xShouldWrite = pdTRUE;
+        ( void ) prvWriteBytesToBuffer( pxStreamBuffer, ( const uint8_t * ) &( xDataLengthBytes ), sbBYTES_TO_STORE_MESSAGE_LENGTH );
+    }
+    else
+    {
+        /* There is space available, but not enough space. */
+        xShouldWrite = pdFALSE;
+    }
+
+    if( xShouldWrite != pdFALSE )
+    {
+        /* Writes the data itself. */
+        xReturn = prvWriteBytesToBuffer( pxStreamBuffer, ( const uint8_t * ) pvTxData, xDataLengthBytes ); /*lint !e9079 Storage buffer is implemented as uint8_t for ease of sizing, alignment and access. */
+    }
+    else
+    {
+        xReturn = 0;
+    }
+
+    return xReturn;
+>>>>>>> origin/smp
 }
 /*-----------------------------------------------------------*/
 
@@ -845,7 +930,11 @@ size_t xStreamBufferReceive( StreamBufferHandle_t xStreamBuffer,
      * read bytes from the buffer. */
     if( xBytesAvailable > xBytesToStoreMessageLength )
     {
+<<<<<<< HEAD
         xReceivedLength = prvReadMessageFromBuffer( pxStreamBuffer, pvRxData, xBufferLengthBytes, xBytesAvailable );
+=======
+        xReceivedLength = prvReadMessageFromBuffer( pxStreamBuffer, pvRxData, xBufferLengthBytes, xBytesAvailable, xBytesToStoreMessageLength );
+>>>>>>> origin/smp
 
         /* Was a task waiting for space in the buffer? */
         if( xReceivedLength != ( size_t ) 0 )
@@ -871,7 +960,11 @@ size_t xStreamBufferReceive( StreamBufferHandle_t xStreamBuffer,
 size_t xStreamBufferNextMessageLengthBytes( StreamBufferHandle_t xStreamBuffer )
 {
     StreamBuffer_t * const pxStreamBuffer = xStreamBuffer;
+<<<<<<< HEAD
     size_t xReturn, xBytesAvailable;
+=======
+    size_t xReturn, xBytesAvailable, xOriginalTail;
+>>>>>>> origin/smp
     configMESSAGE_BUFFER_LENGTH_TYPE xTempReturn;
 
     configASSERT( pxStreamBuffer );
@@ -885,9 +978,20 @@ size_t xStreamBufferNextMessageLengthBytes( StreamBufferHandle_t xStreamBuffer )
         {
             /* The number of bytes available is greater than the number of bytes
              * required to hold the length of the next message, so another message
+<<<<<<< HEAD
              * is available. */
             ( void ) prvReadBytesFromBuffer( pxStreamBuffer, ( uint8_t * ) &xTempReturn, sbBYTES_TO_STORE_MESSAGE_LENGTH, pxStreamBuffer->xTail );
             xReturn = ( size_t ) xTempReturn;
+=======
+             * is available.  Return its length without removing the length bytes
+             * from the buffer.  A copy of the tail is stored so the buffer can be
+             * returned to its prior state as the message is not actually being
+             * removed from the buffer. */
+            xOriginalTail = pxStreamBuffer->xTail;
+            ( void ) prvReadBytesFromBuffer( pxStreamBuffer, ( uint8_t * ) &xTempReturn, sbBYTES_TO_STORE_MESSAGE_LENGTH, xBytesAvailable );
+            xReturn = ( size_t ) xTempReturn;
+            pxStreamBuffer->xTail = xOriginalTail;
+>>>>>>> origin/smp
         }
         else
         {
@@ -942,7 +1046,11 @@ size_t xStreamBufferReceiveFromISR( StreamBufferHandle_t xStreamBuffer,
      * read bytes from the buffer. */
     if( xBytesAvailable > xBytesToStoreMessageLength )
     {
+<<<<<<< HEAD
         xReceivedLength = prvReadMessageFromBuffer( pxStreamBuffer, pvRxData, xBufferLengthBytes, xBytesAvailable );
+=======
+        xReceivedLength = prvReadMessageFromBuffer( pxStreamBuffer, pvRxData, xBufferLengthBytes, xBytesAvailable, xBytesToStoreMessageLength );
+>>>>>>> origin/smp
 
         /* Was a task waiting for space in the buffer? */
         if( xReceivedLength != ( size_t ) 0 )
@@ -968,6 +1076,7 @@ size_t xStreamBufferReceiveFromISR( StreamBufferHandle_t xStreamBuffer,
 static size_t prvReadMessageFromBuffer( StreamBuffer_t * pxStreamBuffer,
                                         void * pvRxData,
                                         size_t xBufferLengthBytes,
+<<<<<<< HEAD
                                         size_t xBytesAvailable )
 {
     size_t xCount, xNextMessageLength;
@@ -979,17 +1088,44 @@ static size_t prvReadMessageFromBuffer( StreamBuffer_t * pxStreamBuffer,
         /* A discrete message is being received.  First receive the length
          * of the message. */
         xNextTail = prvReadBytesFromBuffer( pxStreamBuffer, ( uint8_t * ) &xTempNextMessageLength, sbBYTES_TO_STORE_MESSAGE_LENGTH, xNextTail );
+=======
+                                        size_t xBytesAvailable,
+                                        size_t xBytesToStoreMessageLength )
+{
+    size_t xOriginalTail, xReceivedLength, xNextMessageLength;
+    configMESSAGE_BUFFER_LENGTH_TYPE xTempNextMessageLength;
+
+    if( xBytesToStoreMessageLength != ( size_t ) 0 )
+    {
+        /* A discrete message is being received.  First receive the length
+         * of the message.  A copy of the tail is stored so the buffer can be
+         * returned to its prior state if the length of the message is too
+         * large for the provided buffer. */
+        xOriginalTail = pxStreamBuffer->xTail;
+        ( void ) prvReadBytesFromBuffer( pxStreamBuffer, ( uint8_t * ) &xTempNextMessageLength, xBytesToStoreMessageLength, xBytesAvailable );
+>>>>>>> origin/smp
         xNextMessageLength = ( size_t ) xTempNextMessageLength;
 
         /* Reduce the number of bytes available by the number of bytes just
          * read out. */
+<<<<<<< HEAD
         xBytesAvailable -= sbBYTES_TO_STORE_MESSAGE_LENGTH;
+=======
+        xBytesAvailable -= xBytesToStoreMessageLength;
+>>>>>>> origin/smp
 
         /* Check there is enough space in the buffer provided by the
          * user. */
         if( xNextMessageLength > xBufferLengthBytes )
         {
+<<<<<<< HEAD
             /* The user has provided insufficient space to read the message. */
+=======
+            /* The user has provided insufficient space to read the message
+             * so return the buffer to its previous state (so the length of
+             * the message is in the buffer again). */
+            pxStreamBuffer->xTail = xOriginalTail;
+>>>>>>> origin/smp
             xNextMessageLength = 0;
         }
         else
@@ -1004,6 +1140,7 @@ static size_t prvReadMessageFromBuffer( StreamBuffer_t * pxStreamBuffer,
         xNextMessageLength = xBufferLengthBytes;
     }
 
+<<<<<<< HEAD
     /* Use the minimum of the wanted bytes and the available bytes. */
     xCount = configMIN( xNextMessageLength, xBytesAvailable );
 
@@ -1014,6 +1151,12 @@ static size_t prvReadMessageFromBuffer( StreamBuffer_t * pxStreamBuffer,
     }
 
     return xCount;
+=======
+    /* Read the actual data. */
+    xReceivedLength = prvReadBytesFromBuffer( pxStreamBuffer, ( uint8_t * ) pvRxData, xNextMessageLength, xBytesAvailable ); /*lint !e9079 Data storage area is implemented as uint8_t array for ease of sizing, indexing and alignment. */
+
+    return xReceivedLength;
+>>>>>>> origin/smp
 }
 /*-----------------------------------------------------------*/
 
@@ -1140,6 +1283,7 @@ BaseType_t xStreamBufferReceiveCompletedFromISR( StreamBufferHandle_t xStreamBuf
 
 static size_t prvWriteBytesToBuffer( StreamBuffer_t * const pxStreamBuffer,
                                      const uint8_t * pucData,
+<<<<<<< HEAD
                                      size_t xCount,
                                      size_t xHead )
 {
@@ -1155,6 +1299,24 @@ static size_t prvWriteBytesToBuffer( StreamBuffer_t * const pxStreamBuffer,
     /* Write as many bytes as can be written in the first write. */
     configASSERT( ( xHead + xFirstLength ) <= pxStreamBuffer->xLength );
     ( void ) memcpy( ( void * ) ( &( pxStreamBuffer->pucBuffer[ xHead ] ) ), ( const void * ) pucData, xFirstLength ); /*lint !e9087 memcpy() requires void *. */
+=======
+                                     size_t xCount )
+{
+    size_t xNextHead, xFirstLength;
+
+    configASSERT( xCount > ( size_t ) 0 );
+
+    xNextHead = pxStreamBuffer->xHead;
+
+    /* Calculate the number of bytes that can be added in the first write -
+     * which may be less than the total number of bytes that need to be added if
+     * the buffer will wrap back to the beginning. */
+    xFirstLength = configMIN( pxStreamBuffer->xLength - xNextHead, xCount );
+
+    /* Write as many bytes as can be written in the first write. */
+    configASSERT( ( xNextHead + xFirstLength ) <= pxStreamBuffer->xLength );
+    ( void ) memcpy( ( void * ) ( &( pxStreamBuffer->pucBuffer[ xNextHead ] ) ), ( const void * ) pucData, xFirstLength ); /*lint !e9087 memcpy() requires void *. */
+>>>>>>> origin/smp
 
     /* If the number of bytes written was less than the number that could be
      * written in the first write... */
@@ -1169,23 +1331,38 @@ static size_t prvWriteBytesToBuffer( StreamBuffer_t * const pxStreamBuffer,
         mtCOVERAGE_TEST_MARKER();
     }
 
+<<<<<<< HEAD
     xHead += xCount;
 
     if( xHead >= pxStreamBuffer->xLength )
     {
         xHead -= pxStreamBuffer->xLength;
+=======
+    xNextHead += xCount;
+
+    if( xNextHead >= pxStreamBuffer->xLength )
+    {
+        xNextHead -= pxStreamBuffer->xLength;
+>>>>>>> origin/smp
     }
     else
     {
         mtCOVERAGE_TEST_MARKER();
     }
 
+<<<<<<< HEAD
     return xHead;
+=======
+    pxStreamBuffer->xHead = xNextHead;
+
+    return xCount;
+>>>>>>> origin/smp
 }
 /*-----------------------------------------------------------*/
 
 static size_t prvReadBytesFromBuffer( StreamBuffer_t * pxStreamBuffer,
                                       uint8_t * pucData,
+<<<<<<< HEAD
                                       size_t xCount,
                                       size_t xTail )
 {
@@ -1210,12 +1387,61 @@ static size_t prvReadBytesFromBuffer( StreamBuffer_t * pxStreamBuffer,
     {
         /* ...then read the remaining bytes from the start of the buffer. */
         ( void ) memcpy( ( void * ) &( pucData[ xFirstLength ] ), ( void * ) ( pxStreamBuffer->pucBuffer ), xCount - xFirstLength ); /*lint !e9087 memcpy() requires void *. */
+=======
+                                      size_t xMaxCount,
+                                      size_t xBytesAvailable )
+{
+    size_t xCount, xFirstLength, xNextTail;
+
+    /* Use the minimum of the wanted bytes and the available bytes. */
+    xCount = configMIN( xBytesAvailable, xMaxCount );
+
+    if( xCount > ( size_t ) 0 )
+    {
+        xNextTail = pxStreamBuffer->xTail;
+
+        /* Calculate the number of bytes that can be read - which may be
+         * less than the number wanted if the data wraps around to the start of
+         * the buffer. */
+        xFirstLength = configMIN( pxStreamBuffer->xLength - xNextTail, xCount );
+
+        /* Obtain the number of bytes it is possible to obtain in the first
+         * read.  Asserts check bounds of read and write. */
+        configASSERT( xFirstLength <= xMaxCount );
+        configASSERT( ( xNextTail + xFirstLength ) <= pxStreamBuffer->xLength );
+        ( void ) memcpy( ( void * ) pucData, ( const void * ) &( pxStreamBuffer->pucBuffer[ xNextTail ] ), xFirstLength ); /*lint !e9087 memcpy() requires void *. */
+
+        /* If the total number of wanted bytes is greater than the number
+         * that could be read in the first read... */
+        if( xCount > xFirstLength )
+        {
+            /*...then read the remaining bytes from the start of the buffer. */
+            configASSERT( xCount <= xMaxCount );
+            ( void ) memcpy( ( void * ) &( pucData[ xFirstLength ] ), ( void * ) ( pxStreamBuffer->pucBuffer ), xCount - xFirstLength ); /*lint !e9087 memcpy() requires void *. */
+        }
+        else
+        {
+            mtCOVERAGE_TEST_MARKER();
+        }
+
+        /* Move the tail pointer to effectively remove the data read from
+         * the buffer. */
+        xNextTail += xCount;
+
+        if( xNextTail >= pxStreamBuffer->xLength )
+        {
+            xNextTail -= pxStreamBuffer->xLength;
+        }
+
+        pxStreamBuffer->xTail = xNextTail;
+>>>>>>> origin/smp
     }
     else
     {
         mtCOVERAGE_TEST_MARKER();
     }
 
+<<<<<<< HEAD
     /* Move the tail pointer to effectively remove the data read from the buffer. */
     xTail += xCount;
 
@@ -1225,6 +1451,9 @@ static size_t prvReadBytesFromBuffer( StreamBuffer_t * pxStreamBuffer,
     }
 
     return xTail;
+=======
+    return xCount;
+>>>>>>> origin/smp
 }
 /*-----------------------------------------------------------*/
 

@@ -62,6 +62,7 @@ KERNEL_IGNORED_EXTENSIONS = [
     '.sh',
     '.txt',
     '.cmake'
+<<<<<<< HEAD
 ]
 
 KERNEL_ASM_EXTENSIONS = [
@@ -81,6 +82,8 @@ KERNEL_ASM_EXTENSIONS = [
 
 KERNEL_PY_EXTENSIONS = [
     '.py'
+=======
+>>>>>>> origin/smp
 ]
 
 KERNEL_IGNORED_PATTERNS = [
@@ -99,10 +102,15 @@ KERNEL_THIRD_PARTY_PATTERNS = [
 
 KERNEL_HEADER = [
     '/*\n',
+<<<<<<< HEAD
     ' * FreeRTOS Kernel <DEVELOPMENT BRANCH>\n',
     ' * Copyright (C) 2021 Amazon.com, Inc. or its affiliates.  All Rights Reserved.\n',
     ' *\n',
     ' * SPDX-License-Identifier: MIT\n',
+=======
+    ' * FreeRTOS SMP Kernel V202110.00\n',
+    ' * Copyright (C) 2020 Amazon.com, Inc. or its affiliates.  All Rights Reserved.\n',
+>>>>>>> origin/smp
     ' *\n',
     ' * Permission is hereby granted, free of charge, to any person obtaining a copy of\n',
     ' * this software and associated documentation files (the "Software"), to deal in\n',

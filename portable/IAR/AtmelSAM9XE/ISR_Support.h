@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 ;/*
 ; * FreeRTOS Kernel <DEVELOPMENT BRANCH>
 ; * Copyright (C) 2021 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
@@ -25,6 +26,8 @@
 ; * https://github.com/FreeRTOS
 ; *
 ; */
+=======
+>>>>>>> origin/smp
 	EXTERN pxCurrentTCB
 	EXTERN ulCriticalNesting
 
@@ -34,15 +37,23 @@
 
 portSAVE_CONTEXT MACRO
 
+<<<<<<< HEAD
 	; Push R0 as we are going to use the register.
 	STMDB	SP!, {R0}
 
 	; Set R0 to point to the task stack pointer.
+=======
+	; Push R0 as we are going to use the register. 					
+	STMDB	SP!, {R0}
+
+	; Set R0 to point to the task stack pointer. 					
+>>>>>>> origin/smp
 	STMDB	SP, {SP}^
 	NOP
 	SUB		SP, SP, #4
 	LDMIA	SP!, {R0}
 
+<<<<<<< HEAD
 	; Push the return address onto the stack.
 	STMDB	R0!, {LR}
 
@@ -53,10 +64,23 @@ portSAVE_CONTEXT MACRO
 	LDMIA	SP!, {R0}
 
 	; Push all the system mode registers onto the task stack.
+=======
+	; Push the return address onto the stack. 						
+	STMDB	R0!, {LR}
+
+	; Now we have saved LR we can use it instead of R0. 				
+	MOV		LR, R0
+
+	; Pop R0 so we can save it onto the system mode stack. 			
+	LDMIA	SP!, {R0}
+
+	; Push all the system mode registers onto the task stack. 		
+>>>>>>> origin/smp
 	STMDB	LR, {R0-LR}^
 	NOP
 	SUB		LR, LR, #60
 
+<<<<<<< HEAD
 	; Push the SPSR onto the task stack.
 	MRS		R0, SPSR
 	STMDB	LR!, {R0}
@@ -66,6 +90,17 @@ portSAVE_CONTEXT MACRO
 	STMDB	LR!, {R0}
 
 	; Store the new top of stack for the task.
+=======
+	; Push the SPSR onto the task stack. 							
+	MRS		R0, SPSR
+	STMDB	LR!, {R0}
+
+	LDR		R0, =ulCriticalNesting 
+	LDR		R0, [R0]
+	STMDB	LR!, {R0}
+
+	; Store the new top of stack for the task. 						
+>>>>>>> origin/smp
 	LDR		R1, =pxCurrentTCB
 	LDR		R0, [R1]
 	STR		LR, [R0]
@@ -75,17 +110,27 @@ portSAVE_CONTEXT MACRO
 
 portRESTORE_CONTEXT MACRO
 
+<<<<<<< HEAD
 	; Set the LR to the task stack.
+=======
+	; Set the LR to the task stack. 									
+>>>>>>> origin/smp
 	LDR		R1, =pxCurrentTCB
 	LDR		R0, [R1]
 	LDR		LR, [R0]
 
+<<<<<<< HEAD
 	; The critical nesting depth is the first item on the stack.
 	; Load it into the ulCriticalNesting variable.
+=======
+	; The critical nesting depth is the first item on the stack. 	
+	; Load it into the ulCriticalNesting variable. 					
+>>>>>>> origin/smp
 	LDR		R0, =ulCriticalNesting
 	LDMFD	LR!, {R1}
 	STR		R1, [R0]
 
+<<<<<<< HEAD
 	; Get the SPSR from the stack.
 	LDMFD	LR!, {R0}
 	MSR		SPSR_cxsf, R0
@@ -99,6 +144,21 @@ portRESTORE_CONTEXT MACRO
 
 	; And return - correcting the offset in the LR to obtain the
 	; correct address.
+=======
+	; Get the SPSR from the stack. 									
+	LDMFD	LR!, {R0}
+	MSR		SPSR_cxsf, R0
+
+	; Restore all system mode registers for the task. 				
+	LDMFD	LR, {R0-R14}^
+	NOP
+
+	; Restore the return address. 									
+	LDR		LR, [LR, #+60]
+
+	; And return - correcting the offset in the LR to obtain the 	
+	; correct address. 												
+>>>>>>> origin/smp
 	SUBS	PC, LR, #4
 
 	ENDM

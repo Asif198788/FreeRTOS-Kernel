@@ -1,8 +1,13 @@
 /*
+<<<<<<< HEAD
  * FreeRTOS Kernel <DEVELOPMENT BRANCH>
  * Copyright (C) 2020 Cambridge Consultants Ltd.
  *
  * SPDX-License-Identifier: MIT
+=======
+ * FreeRTOS SMP Kernel V202110.00
+ * Copyright (C) 2020 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
+>>>>>>> origin/smp
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
